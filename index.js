@@ -25,7 +25,7 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use(apiLimiter);
+app.use("/auth", apiLimiter);
 app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
