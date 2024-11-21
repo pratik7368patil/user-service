@@ -1,253 +1,261 @@
 {
-	"info": {
-		"_postman_id": "b5b7b8d0-5f1d-4b3b-8f1a-9b9b9b9b9b9b",
-		"name": "User Service API",
-		"description": "Collection for testing User Service APIs",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"variable": [
-		{
-			"key": "base_url",
-			"value": "http://localhost:3000",
-			"type": "string"
-		},
-		{
-			"key": "auth_token",
-			"value": "",
-			"type": "string"
-		}
-	],
-	"item": [
-		{
-			"name": "Auth",
-			"item": [
-				{
-					"name": "Register",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"password123\",\n    \"address\": {\n        \"street\": \"123 Main St\",\n        \"city\": \"New York\",\n        \"state\": \"NY\",\n        \"country\": \"USA\",\n        \"zipCode\": \"10001\"\n    },\n    \"phoneNumber\": \"+1-234-567-8900\",\n    \"avatar\": \"https://example.com/avatars/johndoe.jpg\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/register",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"register"
-							]
-						},
-						"description": "Register a new user"
-					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.collectionVariables.set(\"auth_token\", jsonData.token);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					]
-				},
-				{
-					"name": "Login",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"password123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"login"
-							]
-						},
-						"description": "Login user"
-					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.collectionVariables.set(\"auth_token\", jsonData.token);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "Users",
-			"item": [
-				{
-					"name": "Get All Users",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{auth_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/users",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users"
-							]
-						},
-						"description": "Retrieve all users from the database"
-					}
-				},
-				{
-					"name": "Get User Profile",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{auth_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/users/me",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users",
-								"me"
-							]
-						},
-						"description": "Get current user profile"
-					}
-				},
-				{
-					"name": "Get User by ID",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{auth_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/users/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "",
-									"description": "MongoDB ObjectId of the user"
-								}
-							]
-						},
-						"description": "Retrieve a specific user by their ID"
-					}
-				},
-				{
-					"name": "Update User",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{auth_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Name\",\n    \"email\": \"updated.email@example.com\",\n    \"address\": {\n        \"street\": \"123 Main St\",\n        \"city\": \"New York\",\n        \"state\": \"NY\",\n        \"country\": \"USA\",\n        \"zipCode\": \"10001\"\n    },\n    \"phoneNumber\": \"+1-234-567-8900\",\n    \"avatar\": \"https://example.com/avatars/johndoe.jpg\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/users/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "",
-									"description": "MongoDB ObjectId of the user"
-								}
-							]
-						},
-						"description": "Update a specific user's information"
-					}
-				},
-				{
-					"name": "Delete User",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{auth_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/users/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "",
-									"description": "MongoDB ObjectId of the user"
-								}
-							]
-						},
-						"description": "Delete a specific user"
-					}
-				}
-			]
-		}
-	]
+  "info": {
+    "name": "User Service API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Test User\",\n    \"email\": \"test@example.com\",\n    \"password\": \"Test@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"Test@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Name\",\n    \"address\": {\n        \"street\": \"123 Main St\",\n        \"city\": \"Sample City\",\n        \"state\": \"Sample State\",\n        \"country\": \"Sample Country\",\n        \"zipCode\": \"12345\"\n    },\n    \"phoneNumber\": \"+1234567890\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Get User Cart",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cart",
+              "host": ["{{baseUrl}}"],
+              "path": ["cart"]
+            }
+          }
+        },
+        {
+          "name": "Add Item to Cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"productId\": \"{{productId}}\",\n    \"quantity\": 1,\n    \"price\": 29.99\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cart/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["cart", "items"]
+            }
+          }
+        },
+        {
+          "name": "Update Cart Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"quantity\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cart/items/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["cart", "items", "{{productId}}"]
+            }
+          }
+        },
+        {
+          "name": "Remove Item from Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cart/items/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["cart", "items", "{{productId}}"]
+            }
+          }
+        },
+        {
+          "name": "Clear Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cart",
+              "host": ["{{baseUrl}}"],
+              "path": ["cart"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
 }

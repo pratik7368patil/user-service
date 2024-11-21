@@ -1,9 +1,16 @@
-const mongoose = require("mongoose");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const userSchema = new mongoose.Schema(
   {
+    id: {
+      type: Number,
+      default: () => {
+        return Math.round(Math.random() * 10000);
+      },
+      unique: true,
+    },
     name: {
       type: String,
       required: [true, "Name is required"],
@@ -25,7 +32,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Password is required"],
       minlength: 6,
-      select: false,
     },
     address: {
       _id: false,
@@ -64,22 +70,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
       sparse: true,
       index: true,
-      match: [
-        /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/,
-        "Please enter a valid phone number",
-      ],
     },
     avatar: {
       type: String,
       trim: true,
       required: false,
       default: null,
-      validate: {
-        validator: function (v) {
-          return v === null || v === "" || /^(http|https):\/\/[^ "]+$/.test(v);
-        },
-        message: "Avatar must be either empty or a valid URL",
-      },
     },
     createdAt: {
       type: Date,
@@ -113,13 +109,21 @@ userSchema.pre("save", async function (next) {
 });
 
 userSchema.methods.generateAuthToken = function () {
-  const token = jwt.sign({ _id: this._id.toString() }, process.env.JWT_SECRET, {
-    expiresIn: "24h",
-  });
+  const token = jwt.sign(
+    { _id: this._id.toString(), idNum: this.id, email: this.email },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "24h",
+    }
+  );
   return token;
 };
 
 userSchema.methods.comparePassword = async function (password) {
+  if (!password) {
+    return false;
+  }
+
   return await bcrypt.compare(password, this.password);
 };
 
@@ -129,4 +133,4 @@ userSchema.methods.toJSON = function () {
   return user;
 };
 
-module.exports = mongoose.model("User", userSchema);
+export default mongoose.model("User", userSchema);

@@ -1,11 +1,12 @@
-const express = require("express");
-const cors = require("cors");
-const morgan = require("morgan");
-require("dotenv").config();
-const connectDB = require("./config/database");
-const User = require("./models/User");
-const auth = require("./config/auth");
-const rateLimit = require("express-rate-limit");
+import express from "express";
+import cors from "cors";
+import morgan from "morgan";
+import connectDB from "./config/database.js";
+import User from "./models/User.js";
+import auth from "./config/auth.js";
+import rateLimit from "express-rate-limit";
+import Cart from "./models/Cart.js";
+import { OrderService, ProductService } from "./services/externalService.js";
 
 const app = express();
 
@@ -35,7 +36,7 @@ app.use(express.urlencoded({ extended: true }));
 // Register
 app.post("/auth/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, address, phoneNumber, avatar } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -44,7 +45,14 @@ app.post("/auth/register", async (req, res) => {
     }
 
     // Create new user
-    const user = new User({ name, email, password });
+    const user = new User({
+      name,
+      email,
+      password,
+      address,
+      phoneNumber,
+      avatar,
+    });
     await user.save();
 
     // Generate token
@@ -126,7 +134,6 @@ app.put("/users/:id", auth, async (req, res) => {
 app.delete("/users/:id", auth, async (req, res) => {
   try {
     // First, try to delete user's orders
-    const OrderService = require("./services/externalService");
     try {
       await OrderService.deleteUserOrders(req.params.id);
     } catch (error) {
@@ -138,9 +145,184 @@ app.delete("/users/:id", auth, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+    res.status(200).json({
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get user's cart
+app.get("/cart", auth, async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ userId: req.user._id });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+    res.json(cart);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Add/Update cart item
+app.post("/cart/items", auth, async (req, res) => {
+  try {
+    const { productId, quantity } = req.body;
+
+    // Get product details from product service
+    const product = await ProductService.getProductById(productId);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    let cart = await Cart.findOne({ userId: req.user._id });
+
+    if (!cart) {
+      // Create new cart if doesn't exist
+      cart = new Cart({
+        userId: req.user._id,
+        items: [
+          {
+            idNum: product.id,
+            productName: product.name,
+            productId,
+            quantity,
+            price: product.price,
+          },
+        ],
+      });
+    } else {
+      // Update existing cart
+      const itemIndex = cart.items.findIndex(
+        (item) => item.productId.toString() === productId
+      );
+
+      if (itemIndex > -1) {
+        cart.items[itemIndex].quantity = quantity;
+      } else {
+        cart.items.push({
+          idNum: product.id,
+          productName: product.name,
+          productId,
+          quantity,
+          price: product.price,
+        });
+      }
+    }
+
+    await cart.save();
+    res.json(cart);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Update cart item
+app.put("/cart/items/:productId", auth, async (req, res) => {
+  try {
+    const { quantity } = req.body;
+    const productId = req.params.productId;
+
+    let cart = await Cart.findOne({ userId: req.user._id });
+
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+    // Update existing cart
+    const itemIndex = cart.items.findIndex(
+      (item) => item.productId.toString() === productId
+    );
+
+    if (itemIndex > -1) {
+      cart.items[itemIndex].quantity = quantity;
+    } else {
+      return res.status(404).json({ message: "Item not found in cart" });
+    }
+
+    await cart.save();
+    res.json(cart);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+// Remove item from cart
+app.delete("/cart/items/:productId", auth, async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ userId: req.user._id });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    cart.items = cart.items.filter(
+      (item) => item.productId.toString() !== req.params.productId
+    );
+
+    await cart.save();
+    res.json(cart);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Clear cart
+app.delete("/cart", auth, async (req, res) => {
+  try {
+    const cart = await Cart.findOneAndDelete({ userId: req.user._id });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+// Create order from cart
+app.post("/orders", auth, async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ userId: req.user._id });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    const user = await User.findOne({ _id: req.user._id });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const orderParams = {
+      // userId: req.user.idNum,
+      cart: {
+        cartItems: cart.items.map((item) => ({
+          // cartItemId: item.idNum,
+          product: {
+            // productId: item.idNum,
+            productName: item.productName,
+            productPrice: item.price,
+          },
+          quantity: item.quantity,
+        })),
+      },
+      address: {
+        // addressId: user.idNum,
+        flatNo: user.address.street,
+        city: user.address.city,
+        state: user.address.state,
+        pinCode: user.address.zipCode,
+      },
+      amount: cart.totalPrice,
+    };
+
+    console.log(orderParams);
+
+    console.log(orderParams.cart.cartItems);
+    const order = await OrderService.createOrder(orderParams);
+    res.json(order);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 });
 
